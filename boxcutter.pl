@@ -33,22 +33,26 @@ my $INDENT_MULTIPLIER = 3;
 my $FMT="%-15s: %s";
 
 # Command line arguments?
-my $abs_path	= './';				# Absolute path to music for output
+my $base_path	= './';				# Base path to music for output
 my $dest		= './';				# Destination for files we generate
 my $prefix		= 'iTunes';			# Prefix to prepend to playlist names
 my $verbose;						# Be a chatterbox?
+my ($mk_artist,$mk_genre,$mk_album);# Generate playlist for top X types of songs
 my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
 GetOptions (
     "library|L=s"	=> \$fname,		# string
     "dest|d=s"		=> \$dest,		# string
-    "abspath|A=s"	=> \$abs_path,	# string
+    "base|b=s"		=> \$base_path,	# string
     "prefix|p=s"	=> \$prefix,	# string
+    "artist|a=i"	=> \$mk_artist,	# integer
+    "genre|g=i"		=> \$mk_genre,	# integer
+    "album|A=i"		=> \$mk_album,	# integer
 	"verbose|v"		=> \$verbose,	# flag
 ) or exit 1;
 
 # sanitize the input
 $dest		=~ s|/*\z||g;	# strip any trailing slashes
-$abs_path	=~ s|/*\z||g;	# strip any trailing slashes
+$base_path	=~ s|/*\z||g;	# strip any trailing slashes
 # yes, the next 2 lines are weird, but it's not convoluted. basically we just
 # make sure that the prefix has a hyphen appended if it's not already there.
 $prefix		=~ s|-*\z||g;	# strip any trailing hyphen
@@ -56,7 +60,7 @@ $prefix 	.= '-' if (length($prefix));	# append a hyphen
 
 # is everything ok?
 &bomb('Path not found: '.$dest)		unless (-d $dest);
-&bomb('Path not found: '.$abs_path)	unless (-d $abs_path);
+&bomb('Path not found: '.$base_path)	unless (-d $base_path);
 &bomb('File not found: '.$fname)	unless (-e $fname);
 
 &feedback(1, sprintf('Reading libary file [%s]', $fname));
@@ -128,7 +132,7 @@ while (my ($id, $playlist) = each %playlists) {
 
 		&feedback(0, sprintf('%s - %s', $artist, $title));
 		&feedback(0, '  ===> '.$song_path);
-		print PLFILE sprintf("%s/%s\n", $abs_path, $song_path);
+		print PLFILE sprintf("%s/%s\n", $base_path, $song_path);
 	}
 	$indent--;
 	close (PLFILE); 
