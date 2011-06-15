@@ -103,6 +103,8 @@ $indent--;
 exit 0;
 
 ###############################################################################
+### SUBROUTINES
+###############################################################################
 
 sub feedback() {
 	my ($msg) =  @_;
@@ -117,3 +119,76 @@ sub bomb() {
 	print STDERR "$msg\n";
 	exit 1;
 }
+
+__END__
+
+###############################################################################
+### POD DOCUMENTATION MARKUP
+###############################################################################
+
+=head1 NAME
+
+boxcutter - Extract information from your iTunes Library.
+
+=head1 SYNOPSIS
+
+boxcutter -A I<absolute path to music> -d I<destination of output> -f I<filename of library>
+
+=head1 DESCRIPTION
+
+Apple made a total mess of their "XML" format in their iTunes database. This
+script utilizes the Mac::iTunes::Library module to extract this information
+into formats more useful to applications other that iTunes.
+
+The original goal of the script was to extract my iTunes playlists into m3u
+format so I could use the same playlists on my iPhone/iPod and in mpd.
+
+=head1 LIBRARY DUPLICATION
+
+As the original task of this script was to make my iTunes playlists useable on
+my Linux desktop, I needed to regularly sync my iTune Library from my Mac to my
+desktop. This command may be useful to others if you are trying to do something
+similar. It uses rsync over SSH to synchronize and is very efficient after the
+initial sync is done.
+
+C<rsync -av --delete --chmod=u=rwX,go=rX --delete-excluded --prune-empty-dirs --exclude=*.mp4 --exclude=*.m4v --exclude=*.ipa --exclude=*.plist --exclude=Album\ Artwork --exclude=*.app --exclude=Mobile\ Applications 192.168.1.1:Music/iTunes/* /mnt/music/>
+
+192.168.1.1 is the IP Address of the Mac. You can use hostname instead.
+
+=head1 BUGS
+
+=head2 Reporting Bugs
+
+Email bug reports to <fukawi2@gmail.com>
+
+=head2 Known Bugs
+
+None known ;)
+
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to Drew Stephens for the Mac::iTunes::Library module. I nearly screamed
+after seeing Apple's "XML" and before seeing Drew's module.
+
+=head1 LICENSE
+
+Copyright 2011 Phillip Smith
+
+Made available under the conditions of the GPLv3. This is free software; refer
+to the COPYING file for details.
+
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+=head1 AVAILABILITY
+
+<http://github.com/fukawi2/boxcutter/>
+
+=head1 AUTHOR
+
+Phillip Smith aka fukawi2
+
+=head1 SEE ALSO
+
+<http://search.cpan.org/dist/Mac-iTunes-Library/>
+
+=cut
