@@ -128,7 +128,7 @@ while (my ($id, $playlist) = each %playlists) {
 
 		&feedback(0, sprintf('%s - %s', $artist, $title));
 		&feedback(0, '  ===> '.$song_path);
-		print PLFILE "$song_path\n";
+		print PLFILE sprintf("%s/%s\n", $abs_path, $song_path);
 	}
 	$indent--;
 	close (PLFILE); 
