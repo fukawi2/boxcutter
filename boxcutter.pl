@@ -19,7 +19,7 @@ my $INDENT_MULTIPLIER = 3;
 my $FMT="%-15s: %s";
 
 # what database file are we meant to process?
-my $fname = 'itunes.xml';
+my $fname = 'iTunes Library.xml';
 &bomb('File not found: '.$fname) unless (-e $fname);
 
 &feedback(sprintf('Reading libary file [%s]', $fname));
