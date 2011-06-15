@@ -7,7 +7,7 @@ DEP_PMODS=Mac::iTunes::Library Mac::iTunes::Library::XML URI::Escape Number::Byt
 ### Destination Paths
 D_BIN=/usr/local/sbin
 D_DOC=/usr/local/share/doc/$(PROJECT)
-D_DOC=/usr/local/share/man
+D_MAN=/usr/local/share/man
 
 ### Lists of files to be installed
 F_CONF=boxcutter.pl
@@ -31,8 +31,8 @@ bin: test $(PROJECT).pl
 
 docs: $(F_DOCS)
 	pod2man --name=boxcutter boxcutter.pl boxcutter.1.man
-	install -Dm0644 boxcutter.1.man $(DESTDIR)$(D_MAN)/man1/boxcutter.1.man
+	install -Dm0644 boxcutter.1.man $(DESTDIR)$(D_MAN)/man1/boxcutter.1p
 
 uninstall:
-	rm -f $(DESTDIR)$(D_MAN)/man1/boxcutter.1.man
+	rm -f $(DESTDIR)$(D_MAN)/man1/boxcutter.1p
 	rm -f $(DESTDIR)$(D_BIN)/$(PROJECT)
