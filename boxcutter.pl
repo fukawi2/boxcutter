@@ -194,6 +194,28 @@ initial sync is done.
 
 192.168.1.1 is the IP Address of the Mac. You can use hostname instead.
 
+=head1 CAVEATS
+
+=over 4
+
+=item * Movie and Video files are exlicitly skipped.
+
+=item * iTunes includes several in-built playlists that are explicitly skipped:
+
+=over 4
+
+=item * "Library" (ALL items in the library)
+
+=item * "Music" (ALL music in the library)
+
+=item * "TV Shows" (ALL TV Shows in the library)
+
+=item * "Movies" (ALL movies in the library)
+
+=back
+
+=back
+
 =head1 BUGS
 
 =head2 Reporting Bugs
