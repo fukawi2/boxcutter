@@ -17,6 +17,7 @@ use strict;
 use warnings;
 
 use 5.010_001; # Need Perl version 5.10 for Coalesce operator (//)
+use Getopt::Long;
 use Mac::iTunes::Library;
 use Mac::iTunes::Library::XML;
 use URI::Escape;
@@ -31,27 +32,44 @@ my $INDENT_MULTIPLIER = 3;
 # Format for column printing feedback
 my $FMT="%-15s: %s";
 
-# what database file are we meant to process?
-my $fname = 'iTunes Library.xml';
-&bomb('File not found: '.$fname) unless (-e $fname);
+# Command line arguments?
+my $abs_path	= './';				# Absolute path to music for output
+my $dest		= './';				# Destination for files we generate
+my $verbose;						# Be a chatterbox?
+my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
+GetOptions (
+    "library|L=s"	=> \$fname,		# string
+    "dest|d=s"		=> \$dest,		# string
+    "abspath|A=s"	=> \$abs_path,	# string
+	"verbose|v"		=> \$verbose,	# flag
+) or exit 1;
 
-&feedback(sprintf('Reading libary file [%s]', $fname));
-&feedback('This could take a while because Apple does not understand XML');
-&feedback('Please be patient, they fucked this up...');
+# sanitize the input
+$dest		=~ s|/*\z||g;	# strip any trailing slashes
+$abs_path	=~ s|/*\z||g;	# strip any trailing slashes
+
+# is everything ok?
+&bomb('Path not found: '.$dest)		unless (-d $dest);
+&bomb('Path not found: '.$abs_path)	unless (-d $abs_path);
+&bomb('File not found: '.$fname)	unless (-e $fname);
+
+&feedback(1, sprintf('Reading libary file [%s]', $fname));
+&feedback(1, 'This could take a while because Apple does not understand XML');
+&feedback(1, 'Please be patient, they fucked this up...');
 my $library = Mac::iTunes::Library::XML->parse($fname);
 
-print;
-&feedback(sprintf('Read library ID [%s] (Version %u.%u from iTunes %s)',
+print '' if $verbose;
+&feedback(1, sprintf('Read library ID [%s] (Version %u.%u from iTunes %s)',
 		$library->libraryPersistentID,
 		$library->majorVersion,
 		$library->minorVersion,
 		$library->applicationVersion,
 	));
 
-&feedback(sprintf($FMT, 'Number of Items',	$library->num));
-&feedback(sprintf($FMT, 'Music Folder',		$library->musicFolder));
-&feedback(sprintf($FMT, 'Persistent ID',	$library->libraryPersistentID));
-&feedback(sprintf($FMT, 'Total Size',		format_bytes($library->size)));
+&feedback(0, sprintf($FMT, 'Number of Items',	$library->num));
+&feedback(0, sprintf($FMT, 'Music Folder',		$library->musicFolder));
+&feedback(0, sprintf($FMT, 'Persistent ID',		$library->libraryPersistentID));
+&feedback(0, sprintf($FMT, 'Total Size',		format_bytes($library->size)));
 
 # we need this to search and replace it in the song path
 my $library_path = $library->musicFolder;
@@ -60,8 +78,9 @@ my $library_path = $library->musicFolder;
 my $audio_files	= 0;
 my $purchased	= 0;
 my %playlists = $library->playlists();
-print;
-&feedback(sprintf('Found %u playlists to process', keys(%playlists)));
+print '' if $verbose;
+my $playlist_count = scalar keys %playlists;
+&feedback(1, sprintf('Found %u playlists to process', $playlist_count));
 $indent++;
 while (my ($id, $playlist) = each %playlists) {
 	# Built-in playlists needs to be skipped
@@ -74,10 +93,10 @@ while (my ($id, $playlist) = each %playlists) {
 	my $oname = sprintf('/tmp/playlists/%s.m3u', $playlist->name);
 	open (PLFILE, ">$oname");
 
-	&feedback(sprintf($FMT, 'Playlist Name',	$playlist->name));
-	&feedback(sprintf($FMT, 'Playlist ID',		$playlist->playlistID));
-	&feedback(sprintf($FMT, 'Item Count',		$playlist->num));
-	&feedback('Output file is: '.$oname);
+	&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
+	&feedback(0, sprintf($FMT, 'Playlist ID',		$playlist->playlistID));
+	&feedback(0, sprintf($FMT, 'Item Count',		$playlist->num));
+	&feedback(0, 'Output file is: '.$oname);
 
 	my @pl_items = $playlist->items();
 	$indent++;
@@ -101,8 +120,8 @@ while (my ($id, $playlist) = each %playlists) {
 		$audio_files++;
 		$purchased++ if ($song->kind =~ m/\bpurchased\b/i);
 
-		&feedback(sprintf('%s - %s', $artist, $title));
-		&feedback('  ===> '.$song_path);
+		&feedback(0, sprintf('%s - %s', $artist, $title));
+		&feedback(0, '  ===> '.$song_path);
 		print PLFILE "$song_path\n";
 	}
 	$indent--;
@@ -110,8 +129,8 @@ while (my ($id, $playlist) = each %playlists) {
 }
 $indent--;
 
-&feedback('Total number of items in playlists: '.$audio_files);
-&feedback('Total number of purchased items: '.$purchased);
+&feedback(1, 'Total number of items in playlists: '.$audio_files);
+&feedback(1, 'Total number of purchased items: '.$purchased);
 
 exit 0;
 
@@ -120,10 +139,14 @@ exit 0;
 ###############################################################################
 
 sub feedback() {
-	my ($msg) =  @_;
+	my ($ignore_verbose, $msg) =  @_;
 	my $num_of_spaces = ($indent*$INDENT_MULTIPLIER);
+
+	return unless ($verbose or $ignore_verbose);
+
 	print(' 'x$num_of_spaces);
 	print("$msg\n");
+
 	return 1;
 }
 
@@ -145,7 +168,7 @@ boxcutter - Extract information from your iTunes Library.
 
 =head1 SYNOPSIS
 
-boxcutter [-A I<absolute path to music>] [-d I<destination of output>] [-f I<filename of library>]
+boxcutter [-A I<absolute path to music>] [-d I<destination of output>] [-L I<filename of library>]
 
 =head1 DESCRIPTION
 
