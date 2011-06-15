@@ -90,12 +90,12 @@ while (my ($id, $playlist) = each %playlists) {
 	next if ($playlist->name eq 'Movies');
 
 	# open our output file
-	my $oname = sprintf('/tmp/playlists/%s.m3u', $playlist->name);
+	my $oname = sprintf('%s/%s.m3u', $dest, $playlist->name);
 	open (PLFILE, ">$oname");
 
 	&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
-	&feedback(0, sprintf($FMT, 'Playlist ID',		$playlist->playlistID));
-	&feedback(0, sprintf($FMT, 'Item Count',		$playlist->num));
+	&feedback(0, sprintf($FMT, 'Playlist ID',	$playlist->playlistID));
+	&feedback(0, sprintf($FMT, 'Item Count',	$playlist->num));
 	&feedback(0, 'Output file is: '.$oname);
 
 	my @pl_items = $playlist->items();
