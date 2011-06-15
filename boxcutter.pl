@@ -18,6 +18,7 @@ use warnings;
 
 use 5.010_001; # Need Perl version 5.10 for Coalesce operator (//)
 use Getopt::Long;
+Getopt::Long::Configure ("bundling");
 use Mac::iTunes::Library;
 use Mac::iTunes::Library::XML;
 use URI::Escape;
@@ -76,48 +77,65 @@ print '' if $verbose;
 		$library->applicationVersion,
 	));
 
-&feedback(0, sprintf($FMT, 'Number of Items',	$library->num));
-&feedback(0, sprintf($FMT, 'Music Folder',		$library->musicFolder));
-&feedback(0, sprintf($FMT, 'Persistent ID',		$library->libraryPersistentID));
-&feedback(0, sprintf($FMT, 'Total Size',		format_bytes($library->size)));
+# Give some extra feedback if in verbose mode. The &feedback sub tests for
+# verbosity, but test it once here instead of 4 times after we call the sub.
+if ($verbose) {
+	&feedback(0, sprintf($FMT, 'Number of Items',	$library->num));
+	&feedback(0, sprintf($FMT, 'Music Folder',		$library->musicFolder));
+	&feedback(0, sprintf($FMT, 'Persistent ID',		$library->libraryPersistentID));
+	&feedback(0, sprintf($FMT, 'Total Size',		format_bytes($library->size)));
+}
 
 # we need this to search and replace it in the song path
 my $library_path = $library->musicFolder;
 
-# Loop through each playlist in the library
-my $audio_files	= 0;
-my $purchased	= 0;
-my %playlists = $library->playlists();
+### TESTING ONLY
+#goto MkArtistPlaylists;
+
+my $purchased		= 0;
+my %playlists		= $library->playlists();
+my $playlist_count	= scalar keys %playlists;
 print '' if $verbose;
-my $playlist_count = scalar keys %playlists;
 &feedback(1, sprintf('Found %u playlists to process', $playlist_count));
+
+# Loop through each playlist in the library
 $indent++;
+Playlist:
 while (my ($id, $playlist) = each %playlists) {
 	# Built-in playlists needs to be skipped
-	next if ($playlist->name eq 'Music');
-	next if ($playlist->name eq 'Library');
-	next if ($playlist->name eq 'TV Shows');
-	next if ($playlist->name eq 'Movies');
+	if ($playlist->name =~ m/\A(Music|Library|TV Shows|Movies)\z/) {
+		&feedback(0, "Skipping $playlist->name");
+		next Playlist;
+	}
 
 	# open our output file
-	my $oname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist->name);
-	open (PLFILE, ">$oname");
+	my $tmp_fname = sprintf('%s/.%s%s.new', $dest, $prefix, $playlist->name);
+	my $out_fname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist->name);
+	open (TF, ">$tmp_fname");
 
-	&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
-	&feedback(0, sprintf($FMT, 'Playlist ID',	$playlist->playlistID));
-	&feedback(0, sprintf($FMT, 'Item Count',	$playlist->num));
-	&feedback(0, 'Output file is: '.$oname);
+	# more verbosity feedback
+	if ($verbose) {
+		&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
+		&feedback(0, sprintf($FMT, 'Playlist ID',	$playlist->playlistID));
+		&feedback(0, sprintf($FMT, 'Item Count',	$playlist->num));
+		&feedback(0, 'Output file is: '.$out_fname);
+	}
 
 	my @pl_items = $playlist->items();
 	$indent++;
+	Track:
 	foreach my $song (@pl_items) {
 		# We don't want to include video files
-		next if ($song->kind =~ m/\bvideo\b/i);
-		next if ($song->kind =~ m/\bmovie\b/i);
+		if ($song->kind =~ m/\b(video|movie)\b/i) {
+			next Track;
+		}
 
+		# Using the coalesce operator (//) we are able to select the first defined
+		# value that is appropiate for the field (or the default empty string)
 		my $artist		= $song->artist	// $song->albumArtist	// '';
 		my $title		= $song->name	// '';
 		my $song_path	= uri_unescape($song->location);
+
 		# remove the library path from the front of the song location so we
 		# have a relative path to the file since we are unlikely to have the
 		# same paths on systems other than the itunes computer.
@@ -127,17 +145,22 @@ while (my ($id, $playlist) = each %playlists) {
 		$song_path =~ s|^\Q$library_path\E||;
 
 		# Counters
-		$audio_files++;
 		$purchased++ if ($song->kind =~ m/\bpurchased\b/i);
 
-		&feedback(0, sprintf('%s - %s', $artist, $title));
-		&feedback(0, '  ===> '.$song_path);
-		print PLFILE sprintf("%s/%s\n", $base_path, $song_path);
+		if ($verbose) {
+			&feedback(0, sprintf('%s - %s', $artist, $title));
+			&feedback(0, '  ===> '.$song_path);
+		}
+
+		print TF sprintf("%s/%s\n", $base_path, $song_path);
 	}
 	$indent--;
-	close (PLFILE); 
+
+	close (TF);
+	rename($tmp_fname, $out_fname);
 }
 $indent--;
+&feedback(0, 'Total number of purchased items: '.$purchased);
 
 &feedback(1, 'Total number of items in playlists: '.$audio_files);
 &feedback(1, 'Total number of purchased items: '.$purchased);
