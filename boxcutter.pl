@@ -132,7 +132,7 @@ boxcutter - Extract information from your iTunes Library.
 
 =head1 SYNOPSIS
 
-boxcutter -A I<absolute path to music> -d I<destination of output> -f I<filename of library>
+boxcutter [-A I<absolute path to music>] [-d I<destination of output>] [-f I<filename of library>]
 
 =head1 DESCRIPTION
 
@@ -151,7 +151,10 @@ desktop. This command may be useful to others if you are trying to do something
 similar. It uses rsync over SSH to synchronize and is very efficient after the
 initial sync is done.
 
-C<rsync -av --delete --chmod=u=rwX,go=rX --delete-excluded --prune-empty-dirs --exclude=*.mp4 --exclude=*.m4v --exclude=*.ipa --exclude=*.plist --exclude=Album\ Artwork --exclude=*.app --exclude=Mobile\ Applications 192.168.1.1:Music/iTunes/* /mnt/music/>
+ rsync -av --delete --chmod=u=rwX,go=rX --delete-excluded --prune-empty-dirs \
+	   --exclude=*.mp4 --exclude=*.m4v --exclude=*.ipa --exclude=*.plist \
+	   --exclude=Album\ Artwork --exclude=*.app --exclude=Mobile\ Applications \
+	   192.168.1.1:Music/iTunes/* /mnt/music/
 
 192.168.1.1 is the IP Address of the Mac. You can use hostname instead.
 
@@ -163,7 +166,7 @@ Email bug reports to <fukawi2@gmail.com>
 
 =head2 Known Bugs
 
-None known ;)
+None ;-)
 
 =head1 ACKNOWLEDGEMENTS
 
