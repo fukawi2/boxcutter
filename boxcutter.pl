@@ -35,18 +35,24 @@ my $FMT="%-15s: %s";
 # Command line arguments?
 my $abs_path	= './';				# Absolute path to music for output
 my $dest		= './';				# Destination for files we generate
+my $prefix		= 'iTunes';			# Prefix to prepend to playlist names
 my $verbose;						# Be a chatterbox?
 my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
 GetOptions (
     "library|L=s"	=> \$fname,		# string
     "dest|d=s"		=> \$dest,		# string
     "abspath|A=s"	=> \$abs_path,	# string
+    "prefix|p=s"	=> \$prefix,	# string
 	"verbose|v"		=> \$verbose,	# flag
 ) or exit 1;
 
 # sanitize the input
 $dest		=~ s|/*\z||g;	# strip any trailing slashes
 $abs_path	=~ s|/*\z||g;	# strip any trailing slashes
+# yes, the next 2 lines are weird, but it's not convoluted. basically we just
+# make sure that the prefix has a hyphen appended if it's not already there.
+$prefix		=~ s|-*\z||g;	# strip any trailing hyphen
+$prefix 	.= '-' if (length($prefix));	# append a hyphen
 
 # is everything ok?
 &bomb('Path not found: '.$dest)		unless (-d $dest);
@@ -90,7 +96,7 @@ while (my ($id, $playlist) = each %playlists) {
 	next if ($playlist->name eq 'Movies');
 
 	# open our output file
-	my $oname = sprintf('%s/%s.m3u', $dest, $playlist->name);
+	my $oname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist->name);
 	open (PLFILE, ">$oname");
 
 	&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
