@@ -178,7 +178,12 @@ boxcutter - Extract information from your iTunes Library.
 
 =head1 SYNOPSIS
 
-boxcutter [-A I<absolute path to music>] [-d I<destination of output>] [-L I<filename of library>]
+boxcutter [OPTIONS]
+
+Without any extra options, attempt to open F<iTunes Library.xml> in the current
+directory and write out a playlist (one file per playlist) in m3u format to the
+current directory for each playlist found in the iTunes library file, subject
+to L<CAVEATS> below.
 
 =head1 DESCRIPTION
 
@@ -188,6 +193,54 @@ into formats more useful to applications other that iTunes.
 
 The original goal of the script was to extract my iTunes playlists into m3u
 format so I could use the same playlists on my iPhone/iPod and in mpd.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -a, --artist I<num>
+
+Generate a playlist for each artist in the library. Limit to top "num" artists
+sorted by their play count. Set "num" to 0 to get playlists for ALL artists.
+
+=item -A, --album I<num>
+
+Generate a playlist for each album in the library. Limit to top "num" albums
+sorted by their play count. Set "num" to 0 to get playlists for ALL albums.
+
+=item -b, --base I<(base path to music)>
+
+A path to prepend to the relative path to songs before writing them into the
+generated playlist(s).
+Default: I<none>
+
+=item -d, --dest I<(destination of output)>
+
+Path (absolute or relative) to save the generated playlist(s).
+Default: C<pwd>
+
+=item -g, --genre I<num>
+
+Generate a playlist for each genre in the library. Limit to top "num" genres
+sorted by their play count. Set "num" to 0 to get playlists for ALL genres.
+
+=item -L, --library I<(filename of library)>
+
+Full path and filename (absolute or relative) of the iTune Library XML file.
+Default: F<iTunes Library.xml>
+
+=item -p, --prefix I<prefix>
+
+A string to prefix to the name of generated playlists.
+Default: iTunes
+
+=item -v, --verbose
+
+Be really noisy on the feedback given on stdout. Basic information and errors
+will still be displayed WITHOUT this flag. Generally only useful for debugging
+or if you like reading every song in your library :P
+
+=back
 
 =head1 LIBRARY DUPLICATION
 
