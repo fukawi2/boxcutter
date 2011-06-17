@@ -107,19 +107,14 @@ while (my ($id, $playlist) = each %playlists) {
 		next Playlist;
 	}
 
-	# open our output file
-	my $tmp_fname = sprintf('%s/.%s%s.new', $dest, $prefix, $playlist->name);
-	my $out_fname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist->name);
-	open (TF, ">$tmp_fname");
-
 	# more verbosity feedback
 	if ($verbose) {
 		&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
 		&feedback(0, sprintf($FMT, 'Playlist ID',	$playlist->playlistID));
 		&feedback(0, sprintf($FMT, 'Item Count',	$playlist->num));
-		&feedback(0, 'Output file is: '.$out_fname);
 	}
 
+	my @item_paths;	# array of filenames to write to playlist
 	my @pl_items = $playlist->items();
 	$indent++;
 	Track:
@@ -129,34 +124,24 @@ while (my ($id, $playlist) = each %playlists) {
 			next Track;
 		}
 
+		# Counters
+		$purchased++ if ($song->kind =~ m/\bpurchased\b/i);
+
 		# Using the coalesce operator (//) we are able to select the first defined
 		# value that is appropiate for the field (or the default empty string)
 		my $artist		= $song->artist	// $song->albumArtist	// '';
 		my $title		= $song->name	// '';
-		my $song_path	= uri_unescape($song->location);
-
-		# remove the library path from the front of the song location so we
-		# have a relative path to the file since we are unlikely to have the
-		# same paths on systems other than the itunes computer.
-		# note that \Q and \E delimit where NOT to interpret regex patterns
-		# so slashes etc in the variable don't confuse the regex engine and
-		# give false (not) matches.
-		$song_path =~ s|^\Q$library_path\E||;
-
-		# Counters
-		$purchased++ if ($song->kind =~ m/\bpurchased\b/i);
 
 		if ($verbose) {
 			&feedback(0, sprintf('%s - %s', $artist, $title));
-			&feedback(0, '  ===> '.$song_path);
+			&feedback(0, '  ===> '.$song->location);
 		}
 
-		print TF sprintf("%s/%s\n", $base_path, $song_path);
+		push(@item_paths, $song->location);
 	}
 	$indent--;
 
-	close (TF);
-	rename($tmp_fname, $out_fname);
+	&write_playlist_m3u($$playlist->name, @item_paths) if (@item_paths);
 }
 $indent--;
 &feedback(0, 'Total number of purchased items: '.$purchased);
@@ -186,6 +171,39 @@ sub bomb() {
 	my ($msg) =  @_;
 	print STDERR "$msg\n";
 	exit 1;
+}
+
+sub write_playlist_m3u() {
+	my ($playlist_name, @item_paths) = @_;
+
+	return unless ($playlist_name and @item_paths);
+
+	# open our output file
+	my $tmp_fname = sprintf('%s/.%s%s.new', $dest, $prefix, $playlist_name);
+	my $out_fname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist_name);
+	open (TF, ">$tmp_fname");
+
+	foreach my $fpath (@item_paths) {
+		# remove the library path from the front of the song location so we
+		# have a relative path to the file since we are unlikely to have the
+		# same paths on systems other than the itunes computer.
+		# note that \Q and \E delimit where NOT to interpret regex patterns
+		# so slashes etc in the variable don't confuse the regex engine and
+		# give false (not) matches.
+		$fpath =~ s|^\Q$library_path\E||;
+
+		$fpath = uri_unescape($fpath);
+
+		$fpath = sprintf("%s/%s", $base_path, $fpath) if ($base_path);
+
+		&feedback(0, sprintf('Writing to [%s] Path: [%s]', $out_fname, $fpath));
+		print TF ($fpath."\n");
+	}
+
+	close (TF);
+	rename($tmp_fname, $out_fname);
+
+	return 1;
 }
 
 __END__
