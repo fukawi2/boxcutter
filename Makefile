@@ -24,6 +24,10 @@ test:
 	for pmod in $(DEP_PMODS) ; do \
 		perl -M$$pmod -e 1 || exit 1 ; \
 	done
+
+	@echo "==> Checking perl syntax"
+	@perl -c $(PROJECT).pl
+
 	@echo "==> It all looks good Captain!"
 
 bin: test $(PROJECT).pl
