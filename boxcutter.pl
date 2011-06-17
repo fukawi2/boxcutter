@@ -45,9 +45,9 @@ GetOptions (
     "dest|d=s"		=> \$dest,		# string
     "base|b=s"		=> \$base_path,	# string
     "prefix|p=s"	=> \$prefix,	# string
-    "artist|a=i"	=> \$mk_artist,	# integer
-    "genre|g=i"		=> \$mk_genre,	# integer
-    "album|A=i"		=> \$mk_album,	# integer
+    "artist|a:i"	=> \$mk_artist,	# integer
+    "genre|g:i"		=> \$mk_genre,	# integer
+    "album|A:i"		=> \$mk_album,	# integer
 	"verbose|v"		=> \$verbose,	# flag
 ) or exit 1;
 
