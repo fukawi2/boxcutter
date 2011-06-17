@@ -38,7 +38,7 @@ my $base_path;				# Base path to music for output
 my $dest;					# Destination for files we generate
 my $prefix		= 'iTunes';	# Prefix to prepend to playlist names
 my $verbose;				# Be a chatterbox?
-my ($mk_artist,$mk_genre,$mk_album);# Generate playlist for top X types of songs
+my ($mk_artist,$mk_genre);# Generate playlist for top X types of songs
 my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
 GetOptions (
     "library|L=s"	=> \$fname,		# string
@@ -47,7 +47,6 @@ GetOptions (
     "prefix|p=s"	=> \$prefix,	# string
     "artist|a:i"	=> \$mk_artist,	# integer
     "genre|g:i"		=> \$mk_genre,	# integer
-    "album|A:i"		=> \$mk_album,	# integer
 	"verbose|v"		=> \$verbose,	# flag
 ) or exit 1;
 
@@ -182,12 +181,6 @@ if ($mk_artist) {
 	$indent--;
 }
 
-MkAlbumPlaylists:
-if ($mk_artist) {
-	# TODO
-	;
-}
-
 MkGenrePlaylists:
 if ($mk_genre) {
 	# TODO
@@ -308,11 +301,6 @@ format so I could use the same playlists on my iPhone/iPod and in mpd.
 
 Generate a playlist for each artist in the library. Limit to top "num" artists
 sorted by their play count. Set "num" to 0 to get playlists for ALL artists.
-
-=item -A, --album I<num>
-
-Generate a playlist for each album in the library. Limit to top "num" albums
-sorted by their play count. Set "num" to 0 to get playlists for ALL albums.
 
 =item -b, --base I<(base path to music)>
 
