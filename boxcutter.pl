@@ -87,9 +87,6 @@ if ($verbose) {
 # we need this to search and replace it in the song path
 my $library_path = $library->musicFolder;
 
-### TESTING ONLY
-#goto MkArtistPlaylists;
-
 my $purchased		= 0;
 my %playlists		= $library->playlists();
 my $playlist_count	= scalar keys %playlists;
@@ -140,21 +137,21 @@ while (my ($id, $playlist) = each %playlists) {
 	}
 	$indent--;
 
-	&write_playlist_m3u($$playlist->name, @item_paths) if (@item_paths);
+	&write_playlist_m3u($playlist->name, @item_paths) if (@item_paths);
 }
 $indent--;
 &feedback(0, 'Total number of purchased items: '.$purchased);
 
-# Generate playlists for top X artist/genre/albums
+# Generate playlists for top X artist/genre
 MkArtistPlaylists:
-if ($mk_artist) {
-	&feedback(0, sprintf('Generating playlists for top %u artists', $mk_artist));
-
+if (defined($mk_artist)) {
 	my %artists_by_count = $library->partist();
 
 	# how many to export?
 	my $artist_item_count = scalar keys %artists_by_count;
 	$mk_artist = $artist_item_count unless ($mk_artist > 0);
+
+	&feedback(1, sprintf('Generating playlists for top %u artists', $mk_artist));
 
 	my @sorted_artists = sort {$artists_by_count{$b} <=> $artists_by_count{$a}} keys %artists_by_count;
 
@@ -175,16 +172,45 @@ if ($mk_artist) {
 			}
 			$indent--;
 
-			&write_playlist_m3u($artist, @item_paths) if (@item_paths);
+			&write_playlist_m3u('byArtist-'.$artist, @item_paths) if (@item_paths);
 		}
 	}
 	$indent--;
 }
 
 MkGenrePlaylists:
-if ($mk_genre) {
-	# TODO
-	;
+if (defined($mk_genre)) {
+	my %genres_by_count = $library->pgenre();
+
+	# how many to export?
+	my $genres_item_count = scalar keys %genres_by_count;
+	$mk_genre = ($genres_item_count-1) unless ($mk_genre > 0);
+
+	&feedback(1, sprintf('Generating playlists for top %u genres', $mk_genre));
+
+	my @sorted_genres = sort {$genres_by_count{$b} <=> $genres_by_count{$a}} keys %genres_by_count;
+
+	$indent++;
+	for (my $count = 1; $count <= $mk_genre; $count++) {
+		my $genre = $sorted_genres[$count];
+
+		&feedback(0, sprintf('Genre [%u]: %s', $count, $genre));
+		my @genre_items = &get_items_by_genre($genre);
+		if (@genre_items) {
+			my @item_paths;
+
+			$indent++;
+			foreach my $song (@genre_items) {
+				&feedback(0, sprintf('Track: %s', $song->name));
+				&feedback(0, sprintf('  ==> %s', $song->location));
+				push(@item_paths, $song->location);
+			}
+			$indent--;
+
+			&write_playlist_m3u('byGenre-'.$genre, @item_paths) if (@item_paths);
+		}
+	}
+	$indent--;
 }
 
 exit 0;
@@ -222,10 +248,13 @@ sub write_playlist_m3u() {
 
 	return unless ($playlist_name and @item_paths);
 
+	# Sanitize the input
+	$playlist_name =~ s|/|-|;
+
 	# open our output file
 	my $tmp_fname = sprintf('%s/.%s%s.new', $dest, $prefix, $playlist_name);
 	my $out_fname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist_name);
-	open (TF, ">$tmp_fname");
+	open (TF, ">$tmp_fname") or die("Can't open $out_fname: $!");
 
 	foreach my $fpath (@item_paths) {
 		# remove the library path from the front of the song location so we
@@ -260,6 +289,27 @@ sub get_items_by_artist() {
 	my $artistSongs = $items{$artist_to_find};	# hashref
 	while (my ($songName, $artistSongItems) = each %$artistSongs) {
 		push(@return_items, @$artistSongItems[0]);
+	}
+
+	return @return_items;
+}
+
+sub get_items_by_genre() {
+	my ($genre_to_find) = @_;
+	return unless $genre_to_find;
+
+	my @return_items;	# The array of items we're going to return
+
+	my %items = $library->items();
+	while (my ($artist, $artistSongs) = each %items) {
+		while (my ($songName, $artistSongItems) = each %$artistSongs) {
+			foreach my $item (@$artistSongItems) {
+				next unless ($item->genre);
+				if ($item->genre eq $genre_to_find) {
+					push(@return_items, $item);
+				}
+			}
+		}
 	}
 
 	return @return_items;
