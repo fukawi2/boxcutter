@@ -212,6 +212,12 @@ sub feedback() {
 	return 1;
 }
 
+sub dbg() {
+	my ($msg) =  @_;
+	print STDERR "DEBUG: $msg\n";
+	return;
+}
+
 sub bomb() {
 	my ($msg) =  @_;
 	print STDERR "$msg\n";
