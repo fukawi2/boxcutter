@@ -34,10 +34,10 @@ my $INDENT_MULTIPLIER = 3;
 my $FMT="%-15s: %s";
 
 # Command line arguments?
-my $base_path	= './';				# Base path to music for output
-my $dest		= './';				# Destination for files we generate
-my $prefix		= 'iTunes';			# Prefix to prepend to playlist names
-my $verbose;						# Be a chatterbox?
+my $base_path;				# Base path to music for output
+my $dest;					# Destination for files we generate
+my $prefix		= 'iTunes';	# Prefix to prepend to playlist names
+my $verbose;				# Be a chatterbox?
 my ($mk_artist,$mk_genre,$mk_album);# Generate playlist for top X types of songs
 my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
 GetOptions (
@@ -52,17 +52,16 @@ GetOptions (
 ) or exit 1;
 
 # sanitize the input
-$dest		=~ s|/*\z||g;	# strip any trailing slashes
-$base_path	=~ s|/*\z||g;	# strip any trailing slashes
-# yes, the next 2 lines are weird, but it's not convoluted. basically we just
-# make sure that the prefix has a hyphen appended if it's not already there.
-$prefix		=~ s|-*\z||g;	# strip any trailing hyphen
-$prefix 	.= '-' if (length($prefix));	# append a hyphen
+$dest		=~ s|/*\z|| if ($dest);			# strip any trailing slashes
+$base_path	=~ s|/*\z|| if ($base_path);	# strip any trailing slashes
+if ($prefix and length($prefix) > 0) {
+	$prefix =~ s|^(.*)-*\z|$1-|;	# Replace any trailing hypens with a single hyphen
+}
 
 # is everything ok?
-&bomb('Path not found: '.$dest)		unless (-d $dest);
-&bomb('Path not found: '.$base_path)	unless (-d $base_path);
-&bomb('File not found: '.$fname)	unless (-e $fname);
+&bomb('Path not found: '.$dest)			if ($dest and ! -d $dest);
+&bomb('Path not found: '.$base_path)	if ($base_path and ! -d $base_path);
+&bomb('File not found: '.$fname)		unless (-e $fname);
 
 &feedback(1, sprintf('Reading libary file [%s]', $fname));
 &feedback(1, 'This could take a while because Apple does not understand XML');
