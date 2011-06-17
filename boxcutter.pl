@@ -146,8 +146,53 @@ while (my ($id, $playlist) = each %playlists) {
 $indent--;
 &feedback(0, 'Total number of purchased items: '.$purchased);
 
-&feedback(1, 'Total number of items in playlists: '.$audio_files);
-&feedback(1, 'Total number of purchased items: '.$purchased);
+# Generate playlists for top X artist/genre/albums
+MkArtistPlaylists:
+if ($mk_artist) {
+	&feedback(0, sprintf('Generating playlists for top %u artists', $mk_artist));
+
+	my %artists_by_count = $library->partist();
+
+	# how many to export?
+	my $artist_item_count = scalar keys %artists_by_count;
+	$mk_artist = $artist_item_count unless ($mk_artist > 0);
+
+	my @sorted_artists = sort {$artists_by_count{$b} <=> $artists_by_count{$a}} keys %artists_by_count;
+
+	$indent++;
+	for (my $count = 1; $count <= $mk_artist; $count++) {
+		my $artist = $sorted_artists[$count];
+
+		&feedback(0, sprintf('Artist [%u]: %s', $count, $artist));
+		my @artist_items = &get_items_by_artist($artist);
+		if (@artist_items) {
+			my @item_paths;
+
+			$indent++;
+			foreach my $song (@artist_items) {
+				&feedback(0, sprintf('Track: %s', $song->name));
+				&feedback(0, sprintf('  ==> %s', $song->location));
+				push(@item_paths, $song->location);
+			}
+			$indent--;
+
+			&write_playlist_m3u($artist, @item_paths) if (@item_paths);
+		}
+	}
+	$indent--;
+}
+
+MkAlbumPlaylists:
+if ($mk_artist) {
+	# TODO
+	;
+}
+
+MkGenrePlaylists:
+if ($mk_genre) {
+	# TODO
+	;
+}
 
 exit 0;
 
@@ -204,6 +249,21 @@ sub write_playlist_m3u() {
 	rename($tmp_fname, $out_fname);
 
 	return 1;
+}
+
+sub get_items_by_artist() {
+	my ($artist_to_find) = @_;
+	return unless $artist_to_find;
+
+	my @return_items;	# The array of items we're going to return
+
+	my %items = $library->items();
+	my $artistSongs = $items{$artist_to_find};	# hashref
+	while (my ($songName, $artistSongItems) = each %$artistSongs) {
+		push(@return_items, @$artistSongItems[0]);
+	}
+
+	return @return_items;
 }
 
 __END__
