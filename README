@@ -1,0 +1,30 @@
+
++-----------------------------------------------------------------------------+
+|  boxcutter - Extract information from your iTunes Library.                  |
++-----------------------------------------------------------------------------+
+
+Apple made a total mess of their "XML" format in their iTunes database. This
+script utilizes the Mac::iTunes::Library module to extract this information
+into formats more useful to applications other that iTunes.
+
+The original goal of the script was to extract my iTunes playlists into m3u
+format so I could use the same playlists on my iPhone/iPod and in mpd.
+
++--------------------+
+   ACKNOWLEDGEMENTS
++--------------------+
+
+Thanks to Drew Stephens for the Mac::iTunes::Library module. I nearly screamed
+after seeing Apple's "XML" and before seeing Drew's module.
+
++------------+
+   LICENSE
++------------+
+
+Copyright 2011 Phillip Smith
+
+Licensed under the conditions of the GNU GPL version 3 or later:
+	http://gnu.org/licenses/gpl.html
+This is free software; you are free to change and redistribute it.
+
+Copyright 2011 Phillip Smith
