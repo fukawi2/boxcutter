@@ -18,6 +18,8 @@ F_DOCS=COPYING
 all: install
 
 install: test bin docs
+	install -D -m 0755 $(PROJECT).pl $(DESTDIR)$(D_BIN)/$(PROJECT)
+	install -Dm0644 boxcutter.1.man $(DESTDIR)$(D_MAN)/man1/boxcutter.1p
 
 test:
 	@echo "==> Checking for required perl modules"
@@ -31,11 +33,9 @@ test:
 	@echo "==> It all looks good Captain!"
 
 bin: test $(PROJECT).pl
-	install -D -m 0755 $(PROJECT).pl $(DESTDIR)$(D_BIN)/$(PROJECT)
 
 docs: $(F_DOCS)
 	pod2man --name=boxcutter boxcutter.pl boxcutter.1.man
-	install -Dm0644 boxcutter.1.man $(DESTDIR)$(D_MAN)/man1/boxcutter.1p
 
 uninstall:
 	rm -f $(DESTDIR)$(D_MAN)/man1/boxcutter.1p
