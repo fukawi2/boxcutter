@@ -16,6 +16,8 @@
 use strict;
 use warnings;
 
+my $VERSION = '0.1.1';
+
 use 5.010_001; # Need Perl version 5.10 for Coalesce operator (//)
 use Getopt::Long;
 Getopt::Long::Configure ("bundling");
@@ -38,17 +40,34 @@ my $base_path;				# Base path to music for output
 my $dest;					# Destination for files we generate
 my $prefix		= 'iTunes';	# Prefix to prepend to playlist names
 my $verbose;				# Be a chatterbox?
+my ($show_help, $show_version);
 my ($mk_artist,$mk_genre);# Generate playlist for top X types of songs
 my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
 GetOptions (
-    "library|L=s"	=> \$fname,		# string
-    "dest|d=s"		=> \$dest,		# string
-    "base|b=s"		=> \$base_path,	# string
-    "prefix|p=s"	=> \$prefix,	# string
-    "artist|a:i"	=> \$mk_artist,	# integer
-    "genre|g:i"		=> \$mk_genre,	# integer
-	"verbose|v"		=> \$verbose,	# flag
+    "library|L=s"	=> \$fname,			# string
+    "dest|d=s"		=> \$dest,			# string
+    "base|b=s"		=> \$base_path,		# string
+    "prefix|p=s"	=> \$prefix,		# string
+    "artist|a:i"	=> \$mk_artist,		# integer
+    "genre|g:i"		=> \$mk_genre,		# integer
+	"verbose|v"		=> \$verbose,		# flag
+	"help|h"		=> \$show_help,		# flag
+	"version|V"		=> \$show_version,	# flag
 ) or exit 1;
+
+if ($show_help) {
+	&usage;
+	exit 1;
+}
+
+if ($show_version) {
+	printf("boxcutter %s\n\n", $VERSION);
+	print("Licensed under the conditions of the GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n");
+	print("This is free software; you are free to change and redistribute it.\n\n");
+	print("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
+	print("Copyright 2011 Phillip Smith\n");
+	exit 0;
+}
 
 # sanitize the input
 $dest		=~ s|/*\z|| if ($dest);			# strip any trailing slashes
@@ -315,6 +334,25 @@ sub get_items_by_genre() {
 	return @return_items;
 }
 
+sub usage() {
+	my $executed_name = $0;
+	$executed_name =~ s|\A.*/([^/]+)\z|$1|;
+	my $cmd_opts;
+	$cmd_opts .= '-L|--library path-to-library';
+	$cmd_opts .= ' -b|--base basepath';
+	$cmd_opts .= ' -d|--dest dest';
+	$cmd_opts .= ' -p|--prefix prefix';
+	$cmd_opts .= ' -a|--artist [num]';
+	$cmd_opts .= ' -g|--genre [num]';
+	$cmd_opts .= ' -v|--verbose';
+	$cmd_opts .= ' -h|--help';
+	$cmd_opts .= ' -V|--version';
+
+	printf("%s %s\n", $executed_name, $cmd_opts);
+
+	return;
+}
+
 __END__
 
 ###############################################################################
@@ -383,6 +421,14 @@ Default: iTunes
 Be really noisy on the feedback given on stdout. Basic information and errors
 will still be displayed WITHOUT this flag. Generally only useful for debugging
 or if you like reading every song in your library :P
+
+=item -h, --help
+
+Show terse help and and exit.
+
+=item -V, --version
+
+Show the version and exit.
 
 =back
 
