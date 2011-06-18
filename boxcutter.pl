@@ -447,6 +447,37 @@ initial sync is done.
 
 192.168.1.1 is the IP Address of the Mac. You can use hostname instead.
 
+If you are using mpd, this is a suitable command to export your iTunes assuming
+that you sync your iTunes library to F</mnt/music/> and your mpd lib dir is
+F</var/lib/mpd/>
+
+ boxcutter --library '/mnt/music/iTunes Library.xml' -d /var/lib/mpd/playlists/
+
+Once the sync is complete you may need to issue an update command to the mpd
+process to get it to see the new playlists.
+
+ mpc update --wait
+
+If mpd still doesn't see the playlists, check that your permissions on the
+files are correct.
+
+=head1 EXAMPLES
+
+Export your library from F</mnt/music/> to F</var/lib/mpd/playlists/>.
+Playlists will have the prefix 'iTunes-'
+
+ boxcutter --library '/mnt/music/iTunes Library.xml' -d /var/lib/mpd/playlists/
+
+Export iTunes library from F<~/Music/> to F<~/Playlists/> with no prefix
+
+ boxcutter -L '~/Music/iTunes Library.xml' -d ~/Playlists/ -p ''
+
+Export library in F<music/>, writing playlist files to the current directory.
+Also create playlists for the Top 10 artists (by playcount) and playlists for
+all genres in the library.
+
+ boxcutter -L 'music/iTunes Library.xml' -a10 -g0
+
 =head1 CAVEATS
 
 =over 4
