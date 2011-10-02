@@ -232,6 +232,9 @@ if (defined($mk_genre)) {
 	$indent--;
 }
 
+# finally, try to get mpd to reload
+system('mpc update --wait --quiet');
+
 exit 0;
 
 ###############################################################################
