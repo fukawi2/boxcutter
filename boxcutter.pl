@@ -296,6 +296,18 @@ sub write_playlist_m3u() {
 	}
 
 	close (TF);
+
+	# try to set permissions
+	{
+		my $perms = 0644;
+		if ( `grep '^mpd:' /etc/group` ) {
+			# mpd group exists
+			system(sprintf('chgrp mpd "%s"', $tmp_fname));
+			$perms = 0640;
+		}
+		chmod $perms, $tmp_fname;
+	}
+
 	rename($tmp_fname, $out_fname);
 
 	return 1;
