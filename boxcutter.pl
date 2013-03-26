@@ -36,50 +36,50 @@ my $INDENT_MULTIPLIER = 3;
 my $FMT="%-15s: %s";
 
 # Command line arguments?
-my $base_path;				# Base path to music for output
-my $dest;					# Destination for files we generate
-my $prefix		= 'iTunes';	# Prefix to prepend to playlist names
-my $verbose;				# Be a chatterbox?
-my ($show_help, $show_version);
-my ($mk_artist,$mk_genre);# Generate playlist for top X types of songs
-my $fname = 'iTunes Library.xml';	# Filename of the iTunes Library
+my $base_path;                    # Base path to music for output
+my $dest;                         # Destination for files we generate
+my $prefix = 'iTunes';            # Prefix to prepend to playlist names
+my $verbose;                      # Be a chatterbox?
+my ($show_help, $show_version);   # booleans
+my ($mk_artist,$mk_genre);        # Generate playlist for top X types of songs
+my $fname = 'iTunes Library.xml'; # Filename of the iTunes Library
 GetOptions (
-    "library|L=s"	=> \$fname,			# string
-    "dest|d=s"		=> \$dest,			# string
-    "base|b=s"		=> \$base_path,		# string
-    "prefix|p=s"	=> \$prefix,		# string
-    "artist|a:i"	=> \$mk_artist,		# integer
-    "genre|g:i"		=> \$mk_genre,		# integer
-	"verbose|v"		=> \$verbose,		# flag
-	"help|h"		=> \$show_help,		# flag
-	"version|V"		=> \$show_version,	# flag
+    "library|L=s" => \$fname,       # string
+    "dest|d=s"    => \$dest,        # string
+    "base|b=s"    => \$base_path,   # string
+    "prefix|p=s"  => \$prefix,      # string
+    "artist|a:i"  => \$mk_artist,   # integer
+    "genre|g:i"   => \$mk_genre,    # integer
+    "verbose|v"   => \$verbose,     # flag
+    "help|h"      => \$show_help,   # flag
+    "version|V"   => \$show_version,# flag
 ) or exit 1;
 
 if ($show_help) {
-	&usage;
-	exit 1;
+  &usage;
+  exit 1;
 }
 
 if ($show_version) {
-	printf("boxcutter %s\n\n", $VERSION);
-	print("Licensed under the conditions of the GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n");
-	print("This is free software; you are free to change and redistribute it.\n\n");
-	print("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
-	print("Copyright 2011 Phillip Smith\n");
-	exit 0;
+  printf("boxcutter %s\n\n", $VERSION);
+  print("Licensed under the conditions of the GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n");
+  print("This is free software; you are free to change and redistribute it.\n\n");
+  print("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
+  print("Copyright 2011 Phillip Smith\n");
+  exit 0;
 }
 
 # sanitize the input
-$dest		=~ s|/*\z|| if ($dest);			# strip any trailing slashes
-$base_path	=~ s|/*\z|| if ($base_path);	# strip any trailing slashes
+$dest       =~ s|/*\z|| if ($dest);       # strip any trailing slashes
+$base_path  =~ s|/*\z|| if ($base_path);  # strip any trailing slashes
 if ($prefix and length($prefix) > 0) {
-	$prefix =~ s|^(.*)-*\z|$1-|;	# Replace any trailing hypens with a single hyphen
+  $prefix =~ s|^(.*)-*\z|$1-|;  # Replace any trailing hypens with a single hyphen
 }
 
 # is everything ok?
-&bomb('Path not found: '.$dest)			if ($dest and ! -d $dest);
-&bomb('Path not found: '.$base_path)	if ($base_path and ! -d $base_path);
-&bomb('File not found: '.$fname)		unless (-e $fname);
+&bomb('Path not found: '.$dest)       if ($dest and ! -d $dest);
+&bomb('Path not found: '.$base_path)  if ($base_path and ! -d $base_path);
+&bomb('File not found: '.$fname)      unless (-e $fname);
 
 &feedback(1, sprintf('Reading libary file [%s]', $fname));
 &feedback(1, 'This could take a while because Apple does not understand XML');
@@ -88,27 +88,27 @@ my $library = Mac::iTunes::Library::XML->parse($fname);
 
 print '' if $verbose;
 &feedback(1, sprintf('Read library ID [%s] (Version %u.%u from iTunes %s)',
-		$library->libraryPersistentID,
-		$library->majorVersion,
-		$library->minorVersion,
-		$library->applicationVersion,
-	));
+    $library->libraryPersistentID,
+    $library->majorVersion,
+    $library->minorVersion,
+    $library->applicationVersion,
+  ));
 
 # Give some extra feedback if in verbose mode. The &feedback sub tests for
 # verbosity, but test it once here instead of 4 times after we call the sub.
 if ($verbose) {
-	&feedback(0, sprintf($FMT, 'Number of Items',	$library->num));
-	&feedback(0, sprintf($FMT, 'Music Folder',		$library->musicFolder));
-	&feedback(0, sprintf($FMT, 'Persistent ID',		$library->libraryPersistentID));
-	&feedback(0, sprintf($FMT, 'Total Size',		format_bytes($library->size)));
+  &feedback(0, sprintf($FMT, 'Number of Items', $library->num));
+  &feedback(0, sprintf($FMT, 'Music Folder',    $library->musicFolder));
+  &feedback(0, sprintf($FMT, 'Persistent ID',   $library->libraryPersistentID));
+  &feedback(0, sprintf($FMT, 'Total Size',    format_bytes($library->size)));
 }
 
 # we need this to search and replace it in the song path
 my $library_path = $library->musicFolder;
 
-my $purchased		= 0;
-my %playlists		= $library->playlists();
-my $playlist_count	= scalar keys %playlists;
+my $purchased   = 0;
+my %playlists   = $library->playlists();
+my $playlist_count  = scalar keys %playlists;
 print '' if $verbose;
 &feedback(1, sprintf('Found %u playlists to process', $playlist_count));
 
@@ -116,47 +116,47 @@ print '' if $verbose;
 $indent++;
 Playlist:
 while (my ($id, $playlist) = each %playlists) {
-	# Built-in playlists needs to be skipped
-	if ($playlist->name =~ m/\A(Music|Library|TV Shows|Movies)\z/) {
-		&feedback(0, "Skipping $playlist->name");
-		next Playlist;
-	}
+  # Built-in playlists needs to be skipped
+  if ($playlist->name =~ m/\A(Music|Library|TV Shows|Movies)\z/) {
+    &feedback(0, "Skipping $playlist->name");
+    next Playlist;
+  }
 
-	# more verbosity feedback
-	if ($verbose) {
-		&feedback(0, sprintf($FMT, 'Playlist Name',	$playlist->name));
-		&feedback(0, sprintf($FMT, 'Playlist ID',	$playlist->playlistID));
-		&feedback(0, sprintf($FMT, 'Item Count',	$playlist->num));
-	}
+  # more verbosity feedback
+  if ($verbose) {
+    &feedback(0, sprintf($FMT, 'Playlist Name', $playlist->name));
+    &feedback(0, sprintf($FMT, 'Playlist ID',   $playlist->playlistID));
+    &feedback(0, sprintf($FMT, 'Item Count',    $playlist->num));
+  }
 
-	my @item_paths;	# array of filenames to write to playlist
-	my @pl_items = $playlist->items();
-	$indent++;
-	Track:
-	foreach my $song (@pl_items) {
-		# We don't want to include video files
-		if ($song->kind =~ m/\b(video|movie)\b/i) {
-			next Track;
-		}
+  my @item_paths; # array of filenames to write to playlist
+  my @pl_items = $playlist->items();
+  $indent++;
+  Track:
+  foreach my $song (@pl_items) {
+    # We don't want to include video files
+    if ($song->kind =~ m/\b(video|movie)\b/i) {
+      next Track;
+    }
 
-		# Counters
-		$purchased++ if ($song->kind =~ m/\bpurchased\b/i);
+    # Counters
+    $purchased++ if ($song->kind =~ m/\bpurchased\b/i);
 
-		# Using the coalesce operator (//) we are able to select the first defined
-		# value that is appropiate for the field (or the default empty string)
-		my $artist		= $song->artist	// $song->albumArtist	// '';
-		my $title		= $song->name	// '';
+    # Using the coalesce operator (//) we are able to select the first defined
+    # value that is appropiate for the field (or the default empty string)
+    my $artist    = $song->artist // $song->albumArtist // '';
+    my $title   = $song->name // '';
 
-		if ($verbose) {
-			&feedback(0, sprintf('%s - %s', $artist, $title));
-			&feedback(0, '  ===> '.$song->location);
-		}
+    if ($verbose) {
+      &feedback(0, sprintf('%s - %s', $artist, $title));
+      &feedback(0, '  ===> '.$song->location);
+    }
 
-		push(@item_paths, $song->location);
-	}
-	$indent--;
+    push(@item_paths, $song->location);
+  }
+  $indent--;
 
-	&write_playlist_m3u($playlist->name, @item_paths) if (@item_paths);
+  &write_playlist_m3u($playlist->name, @item_paths) if (@item_paths);
 }
 $indent--;
 &feedback(0, 'Total number of purchased items: '.$purchased);
@@ -164,72 +164,72 @@ $indent--;
 # Generate playlists for top X artist/genre
 MkArtistPlaylists:
 if (defined($mk_artist)) {
-	my %artists_by_count = $library->partist();
+  my %artists_by_count = $library->partist();
 
-	# how many to export?
-	my $artist_item_count = scalar keys %artists_by_count;
-	$mk_artist = $artist_item_count unless ($mk_artist > 0);
+  # how many to export?
+  my $artist_item_count = scalar keys %artists_by_count;
+  $mk_artist = $artist_item_count unless ($mk_artist > 0);
 
-	&feedback(1, sprintf('Generating playlists for top %u artists', $mk_artist));
+  &feedback(1, sprintf('Generating playlists for top %u artists', $mk_artist));
 
-	my @sorted_artists = sort {$artists_by_count{$b} <=> $artists_by_count{$a}} keys %artists_by_count;
+  my @sorted_artists = sort {$artists_by_count{$b} <=> $artists_by_count{$a}} keys %artists_by_count;
 
-	$indent++;
-	for (my $count = 1; $count <= $mk_artist; $count++) {
-		my $artist = $sorted_artists[$count];
+  $indent++;
+  for (my $count = 1; $count <= $mk_artist; $count++) {
+    my $artist = $sorted_artists[$count];
 
-		&feedback(0, sprintf('Artist [%u]: %s', $count, $artist));
-		my @artist_items = &get_items_by_artist($artist);
-		if (@artist_items) {
-			my @item_paths;
+    &feedback(0, sprintf('Artist [%u]: %s', $count, $artist));
+    my @artist_items = &get_items_by_artist($artist);
+    if (@artist_items) {
+      my @item_paths;
 
-			$indent++;
-			foreach my $song (@artist_items) {
-				&feedback(0, sprintf('Track: %s', $song->name));
-				&feedback(0, sprintf('  ==> %s', $song->location));
-				push(@item_paths, $song->location);
-			}
-			$indent--;
+      $indent++;
+      foreach my $song (@artist_items) {
+        &feedback(0, sprintf('Track: %s', $song->name));
+        &feedback(0, sprintf('  ==> %s', $song->location));
+        push(@item_paths, $song->location);
+      }
+      $indent--;
 
-			&write_playlist_m3u('byArtist-'.$artist, @item_paths) if (@item_paths);
-		}
-	}
-	$indent--;
+      &write_playlist_m3u('byArtist-'.$artist, @item_paths) if (@item_paths);
+    }
+  }
+  $indent--;
 }
 
 MkGenrePlaylists:
 if (defined($mk_genre)) {
-	my %genres_by_count = $library->pgenre();
+  my %genres_by_count = $library->pgenre();
 
-	# how many to export?
-	my $genres_item_count = scalar keys %genres_by_count;
-	$mk_genre = ($genres_item_count-1) unless ($mk_genre > 0);
+  # how many to export?
+  my $genres_item_count = scalar keys %genres_by_count;
+  $mk_genre = ($genres_item_count-1) unless ($mk_genre > 0);
 
-	&feedback(1, sprintf('Generating playlists for top %u genres', $mk_genre));
+  &feedback(1, sprintf('Generating playlists for top %u genres', $mk_genre));
 
-	my @sorted_genres = sort {$genres_by_count{$b} <=> $genres_by_count{$a}} keys %genres_by_count;
+  my @sorted_genres = sort {$genres_by_count{$b} <=> $genres_by_count{$a}} keys %genres_by_count;
 
-	$indent++;
-	for (my $count = 1; $count <= $mk_genre; $count++) {
-		my $genre = $sorted_genres[$count];
+  $indent++;
+  for (my $count = 1; $count <= $mk_genre; $count++) {
+    my $genre = $sorted_genres[$count];
 
-		&feedback(0, sprintf('Genre [%u]: %s', $count, $genre));
-		my @genre_items = &get_items_by_genre($genre);
-		if (@genre_items) {
-			my @item_paths;
+    &feedback(0, sprintf('Genre [%u]: %s', $count, $genre));
+    my @genre_items = &get_items_by_genre($genre);
+    if (@genre_items) {
+      my @item_paths;
 
-			$indent++;
-			foreach my $song (@genre_items) {
-				&feedback(0, sprintf('Track: %s', $song->name));
-				&feedback(0, sprintf('  ==> %s', $song->location));
-				push(@item_paths, $song->location);
-			}
-			$indent--;
+      $indent++;
+      foreach my $song (@genre_items) {
+        &feedback(0, sprintf('Track: %s', $song->name));
+        &feedback(0, sprintf('  ==> %s',  $song->location));
+        push(@item_paths, $song->location);
+      }
+      $indent--;
 
-			&write_playlist_m3u('byGenre-'.$genre, @item_paths) if (@item_paths);
-		}
-	}
-	$indent--;
+      &write_playlist_m3u('byGenre-'.$genre, @item_paths) if (@item_paths);
+    }
+  }
+  $indent--;
 }
 
 # finally, try to get mpd to reload
@@ -242,130 +242,130 @@ exit 0;
 ###############################################################################
 
 sub feedback() {
-	my ($ignore_verbose, $msg) =  @_;
-	my $num_of_spaces = ($indent*$INDENT_MULTIPLIER);
+  my ($ignore_verbose, $msg) =  @_;
+  my $num_of_spaces = ($indent*$INDENT_MULTIPLIER);
 
-	return unless ($verbose or $ignore_verbose);
+  return unless ($verbose or $ignore_verbose);
 
-	print(' 'x$num_of_spaces);
-	print("$msg\n");
+  print(' 'x$num_of_spaces);
+  print("$msg\n");
 
-	return 1;
+  return 1;
 }
 
 sub dbg() {
-	my ($msg) =  @_;
-	print STDERR "DEBUG: $msg\n";
-	return;
+  my ($msg) =  @_;
+  print STDERR "DEBUG: $msg\n";
+  return;
 }
 
 sub bomb() {
-	my ($msg) =  @_;
-	print STDERR "$msg\n";
-	exit 1;
+  my ($msg) =  @_;
+  print STDERR "$msg\n";
+  exit 1;
 }
 
 sub write_playlist_m3u() {
-	my ($playlist_name, @item_paths) = @_;
+  my ($playlist_name, @item_paths) = @_;
 
-	return unless ($playlist_name and @item_paths);
+  return unless ($playlist_name and @item_paths);
 
-	# Sanitize the input
-	$playlist_name =~ s|/|-|;
+  # Sanitize the input
+  $playlist_name =~ s|/|-|;
 
-	# open our output file
-	my $tmp_fname = sprintf('%s/.%s%s.new', $dest, $prefix, $playlist_name);
-	my $out_fname = sprintf('%s/%s%s.m3u', $dest, $prefix, $playlist_name);
-	open (TF, ">$tmp_fname") or die("Can't open $out_fname: $!");
+  # open our output file
+  my $tmp_fname = sprintf('%s/.%s%s.new', $dest, $prefix, $playlist_name);
+  my $out_fname = sprintf('%s/%s%s.m3u',  $dest, $prefix, $playlist_name);
+  open (TF, ">$tmp_fname") or die("Can't open $out_fname: $!");
 
-	foreach my $fpath (@item_paths) {
-		# remove the library path from the front of the song location so we
-		# have a relative path to the file since we are unlikely to have the
-		# same paths on systems other than the itunes computer.
-		# note that \Q and \E delimit where NOT to interpret regex patterns
-		# so slashes etc in the variable don't confuse the regex engine and
-		# give false (not) matches.
-		$fpath =~ s|^\Q$library_path\E||;
+  foreach my $fpath (@item_paths) {
+    # remove the library path from the front of the song location so we
+    # have a relative path to the file since we are unlikely to have the
+    # same paths on systems other than the itunes computer.
+    # note that \Q and \E delimit where NOT to interpret regex patterns
+    # so slashes etc in the variable don't confuse the regex engine and
+    # give false (not) matches.
+    $fpath =~ s|^\Q$library_path\E||;
 
-		$fpath = uri_unescape($fpath);
+    $fpath = uri_unescape($fpath);
 
-		$fpath = sprintf("%s/%s", $base_path, $fpath) if ($base_path);
+    $fpath = sprintf("%s/%s", $base_path, $fpath) if ($base_path);
 
-		&feedback(0, sprintf('Writing to [%s] Path: [%s]', $out_fname, $fpath));
-		print TF ($fpath."\n");
-	}
+    &feedback(0, sprintf('Writing to [%s] Path: [%s]', $out_fname, $fpath));
+    print TF ($fpath."\n");
+  }
 
-	close (TF);
+  close (TF);
 
-	# try to set permissions
-	{
-		my $perms = 0644;
-		if ( `grep '^mpd:' /etc/group` ) {
-			# mpd group exists
-			system(sprintf('chgrp mpd "%s"', $tmp_fname));
-			$perms = 0640;
-		}
-		chmod $perms, $tmp_fname;
-	}
+  # try to set permissions
+  {
+    my $perms = 0644;
+    if ( `grep '^mpd:' /etc/group` ) {
+      # mpd group exists
+      system(sprintf('chgrp mpd "%s"', $tmp_fname));
+      $perms = 0640;
+    }
+    chmod $perms, $tmp_fname;
+  }
 
-	rename($tmp_fname, $out_fname);
+  rename($tmp_fname, $out_fname);
 
-	return 1;
+  return 1;
 }
 
 sub get_items_by_artist() {
-	my ($artist_to_find) = @_;
-	return unless $artist_to_find;
+  my ($artist_to_find) = @_;
+  return unless $artist_to_find;
 
-	my @return_items;	# The array of items we're going to return
+  my @return_items; # The array of items we're going to return
 
-	my %items = $library->items();
-	my $artistSongs = $items{$artist_to_find};	# hashref
-	while (my ($songName, $artistSongItems) = each %$artistSongs) {
-		push(@return_items, @$artistSongItems[0]);
-	}
+  my %items = $library->items();
+  my $artistSongs = $items{$artist_to_find};  # hashref
+  while (my ($songName, $artistSongItems) = each %$artistSongs) {
+    push(@return_items, @$artistSongItems[0]);
+  }
 
-	return @return_items;
+  return @return_items;
 }
 
 sub get_items_by_genre() {
-	my ($genre_to_find) = @_;
-	return unless $genre_to_find;
+  my ($genre_to_find) = @_;
+  return unless $genre_to_find;
 
-	my @return_items;	# The array of items we're going to return
+  my @return_items; # The array of items we're going to return
 
-	my %items = $library->items();
-	while (my ($artist, $artistSongs) = each %items) {
-		while (my ($songName, $artistSongItems) = each %$artistSongs) {
-			foreach my $item (@$artistSongItems) {
-				next unless ($item->genre);
-				if ($item->genre eq $genre_to_find) {
-					push(@return_items, $item);
-				}
-			}
-		}
-	}
+  my %items = $library->items();
+  while (my ($artist, $artistSongs) = each %items) {
+    while (my ($songName, $artistSongItems) = each %$artistSongs) {
+      foreach my $item (@$artistSongItems) {
+        next unless ($item->genre);
+        if ($item->genre eq $genre_to_find) {
+          push(@return_items, $item);
+        }
+      }
+    }
+  }
 
-	return @return_items;
+  return @return_items;
 }
 
 sub usage() {
-	my $executed_name = $0;
-	$executed_name =~ s|\A.*/([^/]+)\z|$1|;
-	my $cmd_opts;
-	$cmd_opts .= '-L|--library path-to-library';
-	$cmd_opts .= ' -b|--base basepath';
-	$cmd_opts .= ' -d|--dest dest';
-	$cmd_opts .= ' -p|--prefix prefix';
-	$cmd_opts .= ' -a|--artist [num]';
-	$cmd_opts .= ' -g|--genre [num]';
-	$cmd_opts .= ' -v|--verbose';
-	$cmd_opts .= ' -h|--help';
-	$cmd_opts .= ' -V|--version';
+  my $executed_name = $0;
+  $executed_name =~ s|\A.*/([^/]+)\z|$1|;
+  my $cmd_opts;
+  $cmd_opts .= '-L|--library path-to-library';
+  $cmd_opts .= ' -b|--base basepath';
+  $cmd_opts .= ' -d|--dest dest';
+  $cmd_opts .= ' -p|--prefix prefix';
+  $cmd_opts .= ' -a|--artist [num]';
+  $cmd_opts .= ' -g|--genre [num]';
+  $cmd_opts .= ' -v|--verbose';
+  $cmd_opts .= ' -h|--help';
+  $cmd_opts .= ' -V|--version';
 
-	printf("%s %s\n", $executed_name, $cmd_opts);
+  printf("%s %s\n", $executed_name, $cmd_opts);
 
-	return;
+  return;
 }
 
 __END__
@@ -456,9 +456,9 @@ similar. It uses rsync over SSH to synchronize and is very efficient after the
 initial sync is done.
 
  rsync -av --delete --chmod=u=rwX,go=rX --delete-excluded --prune-empty-dirs \
-	   --exclude=*.mp4 --exclude=*.m4v --exclude=*.ipa --exclude=*.plist \
-	   --exclude=Album\ Artwork --exclude=*.app --exclude=Mobile\ Applications \
-	   192.168.1.1:Music/iTunes/* /mnt/music/
+     --exclude=*.mp4 --exclude=*.m4v --exclude=*.ipa --exclude=*.plist \
+     --exclude=Album\ Artwork --exclude=*.app --exclude=Mobile\ Applications \
+     192.168.1.1:Music/iTunes/* /mnt/music/
 
 192.168.1.1 is the IP Address of the Mac. You can use hostname instead.
 
