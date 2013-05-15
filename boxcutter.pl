@@ -97,10 +97,10 @@ feedback(1, sprintf('Read library ID [%s] (Version %u.%u from iTunes %s)',
 # Give some extra feedback if in verbose mode. The feedback() sub tests for
 # verbosity, but test it once here instead of 4 times after we call the sub.
 if ($verbose) {
-  feedback(0, sprintf($FMT, 'Number of Items', $library->num));
-  feedback(0, sprintf($FMT, 'Music Folder',    $library->musicFolder));
-  feedback(0, sprintf($FMT, 'Persistent ID',   $library->libraryPersistentID));
-  feedback(0, sprintf($FMT, 'Total Size',    format_bytes($library->size)));
+  feedback(0, sprintf($FMT, 'Number of Items',  $library->num));
+  feedback(0, sprintf($FMT, 'Music Folder',     $library->musicFolder));
+  feedback(0, sprintf($FMT, 'Persistent ID',    $library->libraryPersistentID));
+  feedback(0, sprintf($FMT, 'Total Size',       format_bytes($library->size)));
 }
 
 # we need this to search and replace it in the song path
@@ -142,12 +142,11 @@ while (my ($id, $playlist) = each %playlists) {
     # Counters
     $purchased++ if ($song->kind =~ m/\bpurchased\b/i);
 
-    # Using the coalesce operator (//) we are able to select the first defined
-    # value that is appropiate for the field (or the default empty string)
-    my $artist    = $song->artist // $song->albumArtist // '';
-    my $title   = $song->name // '';
-
     if ($verbose) {
+      # Using the coalesce operator (//) we are able to select the first defined
+      # value that is appropiate for the field (or the default empty string)
+      my $artist  = $song->artist // $song->albumArtist // '';
+      my $title   = $song->name // '';
       feedback(0, sprintf('%s - %s', $artist, $title));
       feedback(0, '  ===> '.$song->location);
     }
