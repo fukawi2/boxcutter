@@ -236,8 +236,13 @@ if (defined($mk_genre)) {
   $indent--;
 }
 
-# finally, try to get mpd to reload
-system('mpc update --wait --quiet');
+###############################################################################
+# finally, try to get mpd to reload if mpd is running
+system('pidof mpd');
+if ( $? >> 8 == 0 ) {
+  feedback(0, 'Asking mpd to update');
+  system('mpc update --wait --quiet');
+}
 
 exit 0;
 
