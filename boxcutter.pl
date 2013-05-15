@@ -56,7 +56,7 @@ GetOptions (
 ) or exit 1;
 
 if ($show_help) {
-  &usage;
+  usage();
   exit 1;
 }
 
@@ -77,30 +77,30 @@ if ($prefix and length($prefix) > 0) {
 }
 
 # is everything ok?
-&bomb('Path not found: '.$dest)       if ($dest and ! -d $dest);
-&bomb('Path not found: '.$base_path)  if ($base_path and ! -d $base_path);
-&bomb('File not found: '.$fname)      unless (-e $fname);
+bomb('Path not found: '.$dest)       if ($dest and ! -d $dest);
+bomb('Path not found: '.$base_path)  if ($base_path and ! -d $base_path);
+bomb('File not found: '.$fname)      unless (-e $fname);
 
-&feedback(1, sprintf('Reading libary file [%s]', $fname));
-&feedback(1, 'This could take a while because Apple does not understand XML');
-&feedback(1, 'Please be patient, they fucked this up...');
+feedback(1, sprintf('Reading libary file [%s]', $fname));
+feedback(1, 'This could take a while because Apple does not understand XML');
+feedback(1, 'Please be patient, they fucked this up...');
 my $library = Mac::iTunes::Library::XML->parse($fname);
 
 print '' if $verbose;
-&feedback(1, sprintf('Read library ID [%s] (Version %u.%u from iTunes %s)',
+feedback(1, sprintf('Read library ID [%s] (Version %u.%u from iTunes %s)',
     $library->libraryPersistentID,
     $library->majorVersion,
     $library->minorVersion,
     $library->applicationVersion,
   ));
 
-# Give some extra feedback if in verbose mode. The &feedback sub tests for
+# Give some extra feedback if in verbose mode. The feedback() sub tests for
 # verbosity, but test it once here instead of 4 times after we call the sub.
 if ($verbose) {
-  &feedback(0, sprintf($FMT, 'Number of Items', $library->num));
-  &feedback(0, sprintf($FMT, 'Music Folder',    $library->musicFolder));
-  &feedback(0, sprintf($FMT, 'Persistent ID',   $library->libraryPersistentID));
-  &feedback(0, sprintf($FMT, 'Total Size',    format_bytes($library->size)));
+  feedback(0, sprintf($FMT, 'Number of Items', $library->num));
+  feedback(0, sprintf($FMT, 'Music Folder',    $library->musicFolder));
+  feedback(0, sprintf($FMT, 'Persistent ID',   $library->libraryPersistentID));
+  feedback(0, sprintf($FMT, 'Total Size',    format_bytes($library->size)));
 }
 
 # we need this to search and replace it in the song path
@@ -110,7 +110,7 @@ my $purchased   = 0;
 my %playlists   = $library->playlists();
 my $playlist_count  = scalar keys %playlists;
 print '' if $verbose;
-&feedback(1, sprintf('Found %u playlists to process', $playlist_count));
+feedback(1, sprintf('Found %u playlists to process', $playlist_count));
 
 # Loop through each playlist in the library
 $indent++;
@@ -118,15 +118,15 @@ Playlist:
 while (my ($id, $playlist) = each %playlists) {
   # Built-in playlists needs to be skipped
   if ($playlist->name =~ m/\A(Music|Library|TV Shows|Movies)\z/) {
-    &feedback(0, "Skipping $playlist->name");
+    feedback(0, "Skipping $playlist->name");
     next Playlist;
   }
 
   # more verbosity feedback
   if ($verbose) {
-    &feedback(0, sprintf($FMT, 'Playlist Name', $playlist->name));
-    &feedback(0, sprintf($FMT, 'Playlist ID',   $playlist->playlistID));
-    &feedback(0, sprintf($FMT, 'Item Count',    $playlist->num));
+    feedback(0, sprintf($FMT, 'Playlist Name', $playlist->name));
+    feedback(0, sprintf($FMT, 'Playlist ID',   $playlist->playlistID));
+    feedback(0, sprintf($FMT, 'Item Count',    $playlist->num));
   }
 
   my @item_paths; # array of filenames to write to playlist
@@ -148,18 +148,18 @@ while (my ($id, $playlist) = each %playlists) {
     my $title   = $song->name // '';
 
     if ($verbose) {
-      &feedback(0, sprintf('%s - %s', $artist, $title));
-      &feedback(0, '  ===> '.$song->location);
+      feedback(0, sprintf('%s - %s', $artist, $title));
+      feedback(0, '  ===> '.$song->location);
     }
 
     push(@item_paths, $song->location);
   }
   $indent--;
 
-  &write_playlist_m3u($playlist->name, @item_paths) if (@item_paths);
+  write_playlist_m3u($playlist->name, @item_paths) if (@item_paths);
 }
 $indent--;
-&feedback(0, 'Total number of purchased items: '.$purchased);
+feedback(0, 'Total number of purchased items: '.$purchased);
 
 # Generate playlists for top X artist/genre
 MkArtistPlaylists:
@@ -170,7 +170,7 @@ if (defined($mk_artist)) {
   my $artist_item_count = scalar keys %artists_by_count;
   $mk_artist = $artist_item_count unless ($mk_artist > 0);
 
-  &feedback(1, sprintf('Generating playlists for top %u artists', $mk_artist));
+  feedback(1, sprintf('Generating playlists for top %u artists', $mk_artist));
 
   my @sorted_artists = sort {$artists_by_count{$b} <=> $artists_by_count{$a}} keys %artists_by_count;
 
@@ -178,20 +178,20 @@ if (defined($mk_artist)) {
   for (my $count = 1; $count <= $mk_artist; $count++) {
     my $artist = $sorted_artists[$count];
 
-    &feedback(0, sprintf('Artist [%u]: %s', $count, $artist));
-    my @artist_items = &get_items_by_artist($artist);
+    feedback(0, sprintf('Artist [%u]: %s', $count, $artist));
+    my @artist_items = get_items_by_artist($artist);
     if (@artist_items) {
       my @item_paths;
 
       $indent++;
       foreach my $song (@artist_items) {
-        &feedback(0, sprintf('Track: %s', $song->name));
-        &feedback(0, sprintf('  ==> %s', $song->location));
+        feedback(0, sprintf('Track: %s', $song->name));
+        feedback(0, sprintf('  ==> %s', $song->location));
         push(@item_paths, $song->location);
       }
       $indent--;
 
-      &write_playlist_m3u('byArtist-'.$artist, @item_paths) if (@item_paths);
+      write_playlist_m3u('byArtist-'.$artist, @item_paths) if (@item_paths);
     }
   }
   $indent--;
@@ -205,7 +205,7 @@ if (defined($mk_genre)) {
   my $genres_item_count = scalar keys %genres_by_count;
   $mk_genre = ($genres_item_count-1) unless ($mk_genre > 0);
 
-  &feedback(1, sprintf('Generating playlists for top %u genres', $mk_genre));
+  feedback(1, sprintf('Generating playlists for top %u genres', $mk_genre));
 
   my @sorted_genres = sort {$genres_by_count{$b} <=> $genres_by_count{$a}} keys %genres_by_count;
 
@@ -213,20 +213,20 @@ if (defined($mk_genre)) {
   for (my $count = 1; $count <= $mk_genre; $count++) {
     my $genre = $sorted_genres[$count];
 
-    &feedback(0, sprintf('Genre [%u]: %s', $count, $genre));
-    my @genre_items = &get_items_by_genre($genre);
+    feedback(0, sprintf('Genre [%u]: %s', $count, $genre));
+    my @genre_items = get_items_by_genre($genre);
     if (@genre_items) {
       my @item_paths;
 
       $indent++;
       foreach my $song (@genre_items) {
-        &feedback(0, sprintf('Track: %s', $song->name));
-        &feedback(0, sprintf('  ==> %s',  $song->location));
+        feedback(0, sprintf('Track: %s', $song->name));
+        feedback(0, sprintf('  ==> %s',  $song->location));
         push(@item_paths, $song->location);
       }
       $indent--;
 
-      &write_playlist_m3u('byGenre-'.$genre, @item_paths) if (@item_paths);
+      write_playlist_m3u('byGenre-'.$genre, @item_paths) if (@item_paths);
     }
   }
   $indent--;
@@ -291,7 +291,7 @@ sub write_playlist_m3u() {
 
     $fpath = sprintf("%s/%s", $base_path, $fpath) if ($base_path);
 
-    &feedback(0, sprintf('Writing to [%s] Path: [%s]', $out_fname, $fpath));
+    feedback(0, sprintf('Writing to [%s] Path: [%s]', $out_fname, $fpath));
     print TF ($fpath."\n");
   }
 
