@@ -112,7 +112,11 @@ my $playlist_count  = scalar keys %playlists;
 print '' if $verbose;
 feedback(1, sprintf('Found %u playlists to process', $playlist_count));
 
-# Loop through each playlist in the library
+###############################################################################
+# Loop through each playlist in the library and write an m3u playlist file into
+# the destination directory. Since an m3u is essentially just a list of file
+# names, each song to be included is just pushed onto the @item_paths array and
+# then that is passed to write_playlist_m3u()
 $indent++;
 Playlist:
 while (my ($id, $playlist) = each %playlists) {
@@ -160,6 +164,7 @@ while (my ($id, $playlist) = each %playlists) {
 $indent--;
 feedback(0, 'Total number of purchased items: '.$purchased);
 
+###############################################################################
 # Generate playlists for top X artist/genre
 MkArtistPlaylists:
 if (defined($mk_artist)) {
