@@ -241,7 +241,7 @@ exit 0;
 ### SUBROUTINES
 ###############################################################################
 
-sub feedback() {
+sub feedback {
   my ($ignore_verbose, $msg) =  @_;
   my $num_of_spaces = ($indent*$INDENT_MULTIPLIER);
 
@@ -253,19 +253,19 @@ sub feedback() {
   return 1;
 }
 
-sub dbg() {
+sub dbg {
   my ($msg) =  @_;
   print STDERR "DEBUG: $msg\n";
   return;
 }
 
-sub bomb() {
+sub bomb {
   my ($msg) =  @_;
   print STDERR "$msg\n";
   exit 1;
 }
 
-sub write_playlist_m3u() {
+sub write_playlist_m3u {
   my ($playlist_name, @item_paths) = @_;
 
   return unless ($playlist_name and @item_paths);
@@ -313,7 +313,7 @@ sub write_playlist_m3u() {
   return 1;
 }
 
-sub get_items_by_artist() {
+sub get_items_by_artist {
   my ($artist_to_find) = @_;
   return unless $artist_to_find;
 
@@ -328,7 +328,7 @@ sub get_items_by_artist() {
   return @return_items;
 }
 
-sub get_items_by_genre() {
+sub get_items_by_genre {
   my ($genre_to_find) = @_;
   return unless $genre_to_find;
 
@@ -349,7 +349,7 @@ sub get_items_by_genre() {
   return @return_items;
 }
 
-sub usage() {
+sub usage {
   my $executed_name = $0;
   $executed_name =~ s|\A.*/([^/]+)\z|$1|;
   my $cmd_opts;
